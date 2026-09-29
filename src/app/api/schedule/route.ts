@@ -33,9 +33,8 @@ export async function GET(request: Request) {
     const getProxyUrl = (targetUrl: string) => {
       const apiKey = process.env.ZENROWS_API_KEY;
       if (apiKey) {
-        // We only use mode=auto and premium_proxy=true.
-        // We removed the cookie harvesting request entirely to prevent ZenRows from rotating the IP between requests!
-        return `https://api.zenrows.com/v1/?apikey=${apiKey}&url=${encodeURIComponent(targetUrl)}&custom_headers=true&premium_proxy=true&premium_proxy_location=it&mode=auto`;
+        // Removed premium_proxy_location to fix 400 Bad Request
+        return `https://api.zenrows.com/v1/?apikey=${apiKey}&url=${encodeURIComponent(targetUrl)}&custom_headers=true&premium_proxy=true&mode=auto`;
       }
       return targetUrl;
     };
