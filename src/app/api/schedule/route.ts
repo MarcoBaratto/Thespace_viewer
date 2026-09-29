@@ -29,22 +29,36 @@ export async function GET(request: Request) {
     
     console.log('Fetching fresh schedule from API...');
     
-    // Helper to route through ZenRows if the key is present in environment variables
+    // Generate a random session ID to keep the ZenRows IP the same for both requests
+    const sessionId = Math.floor(Math.random() * 1000000);
+
     const getProxyUrl = (targetUrl: string) => {
       const apiKey = process.env.ZENROWS_API_KEY;
       if (apiKey) {
-        // Removed premium_proxy_location to fix 400 Bad Request
-        return `https://api.zenrows.com/v1/?apikey=${apiKey}&url=${encodeURIComponent(targetUrl)}&custom_headers=true&premium_proxy=true&mode=auto`;
+        // We use session_id so ZenRows uses the SAME IP for the cookie request and the API request.
+        // We do NOT use premium_proxy because it requires a paid plan and causes a 400 Bad Request.
+        return `https://api.zenrows.com/v1/?apikey=${apiKey}&url=${encodeURIComponent(targetUrl)}&custom_headers=true&session_id=${sessionId}`;
       }
       return targetUrl;
     };
 
-    // Fetch the actual API endpoint directly (without showingDate to get ALL days)
+    // 1. Fetch the homepage to get the required session cookies
+    const homeResponse = await fetch(getProxyUrl('https://www.thespacecinema.it/'), {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      },
+    });
+
+    const setCookieHeader = homeResponse.headers.getSetCookie();
+    const cookies = setCookieHeader.map(c => c.split(';')[0]).join('; ');
+
+    // 2. Fetch the actual API endpoint
     const apiUrl = `https://www.thespacecinema.it/api/microservice/showings/cinemas/1016/films?minEmbargoLevel=3&includesSession=true&includeSessionAttributes=true`;
     
     const apiResponse = await fetch(getProxyUrl(apiUrl), {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Cookie': cookies,
         'Accept': 'application/json',
       },
     });
@@ -62,7 +76,6 @@ export async function GET(request: Request) {
       try {
         data = JSON.parse(rawText);
       } catch (parseError) {
-        console.error('Failed to parse JSON. Raw response:', rawText.substring(0, 500));
         return NextResponse.json(
           { error: 'API did not return valid JSON', raw_text: rawText.substring(0, 500) },
           { status: 502 }
