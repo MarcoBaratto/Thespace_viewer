@@ -19,10 +19,15 @@ NEVER COMMIT OR PUSH CHANGES IF NOT EXPLICITLY REQUESTED
 A custom dashboard and viewer for "The Space Cinema" (Cerro Maggiore - ID 1016), built with Next.js 15, React, and Tailwind CSS. It proxies undocumented microservices to present a clean, fast, and feature-rich UI.
 
 ## 2. Backend / API Proxy (`src/app/api/schedule/route.ts`)
-*   **The Problem:** The official API (`https://www.thespacecinema.it/api/microservice/showings/cinemas/1016/films`) blocks requests without a valid session cookie, returning `401 Unauthorized`.
-*   **The Proxy Solution:** The Next.js route handler first makes a dummy request to the official homepage to harvest a `set-cookie` header. It then attaches this cookie to the actual API call, bypassing the 401 error.
+*   **The Problem:** The official API blocks requests without a valid session cookie, and Cloudflare blocks bot traffic.
+*   **The Proxy Solution (ZenRows):** 
+    *   The Next.js route uses **ZenRows** to bypass Cloudflare. It makes a dummy request to the official homepage to harvest a `set-cookie` header, then attaches this cookie to the actual API call.
+    *   **Antibot & Fingerprinting:** We must pass `antibot=true` and `custom_headers=true` to ZenRows. To avoid Cloudflare blocking us due to Next.js's internal headers (like `x-forwarded-host` which get injected into the global `fetch`), we use the native Node.js `https` module. This allows us to safely pass the `Cookie` and `User-Agent` to the API.
+    *   **Session Management:** Both requests share a `session_id` so ZenRows routes them through the same proxy IP (using a random integer under 10,000).
+    *   **Fetch Caching:** Both `fetch` calls to ZenRows explicitly use `cache: 'no-store'`. Without this, Next.js caches failed responses, preventing recovery.
 *   **Date Optimization:** By explicitly removing the `showingDate` parameter from the query string, the API returns the complete schedule for the next ~15 days for all movies in a single ~270KB payload. This allows for instant client-side date switching.
-*   **Caching Strategy:** To prevent rate-limiting and ensure blazing fast initial loads, the API uses a dual-layer 5-minute cache in production (in-memory variable + `Cache-Control: s-maxage=300`). However, when running locally (`NODE_ENV === 'development'`), caching is completely bypassed (`no-store`) to ensure live testing always gets fresh data.
+*   **Caching Strategy:** To prevent rate-limiting and minimize ZenRows usage, the API uses a dual-layer 1-hour cache in production (in-memory variable + `Cache-Control: s-maxage=3600`). When running locally (`NODE_ENV === 'development'`), the Next.js `Response` cache is bypassed (`no-store`) for live testing.
+*   **Cache Warming (Vercel Cron):** A Vercel Cron job (`vercel.json`) is configured to hit the `/api/schedule` endpoint every hour (`0 * * * *`). This keeps the Edge Cache and in-memory cache populated.
 
 ## 3. Frontend Architecture (`src/components/CinemaDashboard.tsx`)
 *   **State & Routing:**
