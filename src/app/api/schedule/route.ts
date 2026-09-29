@@ -38,7 +38,8 @@ export async function GET(request: Request) {
       if (apiKey) {
         // We use session_id so ZenRows uses the SAME IP for the cookie request and the API request.
         // We use antibot=true because otherwise Cloudflare blocks the request with a 422 error.
-        return `https://api.zenrows.com/v1/?apikey=${apiKey}&url=${encodeURIComponent(targetUrl)}&custom_headers=true&session_id=${sessionId}&antibot=true`;
+        // We removed custom_headers=true because Next.js internal headers might trigger Cloudflare.
+        return `https://api.zenrows.com/v1/?apikey=${apiKey}&url=${encodeURIComponent(targetUrl)}&session_id=${sessionId}&antibot=true`;
       }
       return targetUrl;
     };
@@ -48,20 +49,26 @@ export async function GET(request: Request) {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
       },
+      cache: 'no-store', // Prevent Next.js from caching ZenRows responses
     });
 
-    const setCookieHeader = homeResponse.headers.getSetCookie();
+    const setCookieHeader = homeResponse.headers.getSetCookie ? homeResponse.headers.getSetCookie() : [];
     const cookies = setCookieHeader.map(c => c.split(';')[0]).join('; ');
 
     // 2. Fetch the actual API endpoint
     const apiUrl = `https://www.thespacecinema.it/api/microservice/showings/cinemas/1016/films?minEmbargoLevel=3&includesSession=true&includeSessionAttributes=true`;
     
+    const apiHeaders: Record<string, string> = {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      'Accept': 'application/json',
+    };
+    if (cookies) {
+      apiHeaders['Cookie'] = cookies;
+    }
+
     const apiResponse = await fetch(getProxyUrl(apiUrl), {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Cookie': cookies,
-        'Accept': 'application/json',
-      },
+      headers: apiHeaders,
+      cache: 'no-store', // Prevent Next.js from caching ZenRows responses
     });
 
     if (!apiResponse.ok) {
