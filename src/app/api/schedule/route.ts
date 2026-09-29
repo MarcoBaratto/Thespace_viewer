@@ -31,7 +31,8 @@ export async function GET(request: Request) {
     const getProxyUrl = (targetUrl: string) => {
       const apiKey = process.env.ZENROWS_API_KEY;
       if (apiKey) {
-        return `https://api.zenrows.com/v1/?apikey=${apiKey}&url=${encodeURIComponent(targetUrl)}&custom_headers=true`;
+        // Using premium_proxy, js_render, and auto mode to fully bypass Cloudflare challenges
+        return `https://api.zenrows.com/v1/?apikey=${apiKey}&url=${encodeURIComponent(targetUrl)}&custom_headers=true&mode=auto`;
       }
       return targetUrl;
     };

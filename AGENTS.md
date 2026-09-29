@@ -13,6 +13,8 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 > [!IMPORTANT]
 > **AI AGENT DIRECTIVE:** This file serves as the core memory and context for this project. Whenever you implement a new feature, modify the architecture, or add new capabilities to the frontend or backend, you MUST append or update the relevant sections in this file to reflect the changes. This ensures continuity across different coding sessions.
 
+NEVER COMMIT OR PUSH CHANGES IF NOT EXPLICITLY REQUESTED
+
 ## 1. Overview
 A custom dashboard and viewer for "The Space Cinema" (Cerro Maggiore - ID 1016), built with Next.js 15, React, and Tailwind CSS. It proxies undocumented microservices to present a clean, fast, and feature-rich UI.
 
