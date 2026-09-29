@@ -26,8 +26,18 @@ export async function GET(request: Request) {
 
   try {
     console.log('Fetching fresh schedule from API...');
+    
+    // Helper to route through ZenRows if the key is present in environment variables
+    const getProxyUrl = (targetUrl: string) => {
+      const apiKey = process.env.ZENROWS_API_KEY;
+      if (apiKey) {
+        return `https://api.zenrows.com/v1/?apikey=${apiKey}&url=${encodeURIComponent(targetUrl)}&custom_headers=true`;
+      }
+      return targetUrl;
+    };
+
     // 1. Fetch the homepage to get the required session cookies
-    const homeResponse = await fetch('https://www.thespacecinema.it/', {
+    const homeResponse = await fetch(getProxyUrl('https://www.thespacecinema.it/'), {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
       },
@@ -40,7 +50,7 @@ export async function GET(request: Request) {
     // 2. Fetch the actual API endpoint (without showingDate to get ALL days)
     const apiUrl = `https://www.thespacecinema.it/api/microservice/showings/cinemas/1016/films?minEmbargoLevel=3&includesSession=true&includeSessionAttributes=true`;
     
-    const apiResponse = await fetch(apiUrl, {
+    const apiResponse = await fetch(getProxyUrl(apiUrl), {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'Cookie': cookies,
