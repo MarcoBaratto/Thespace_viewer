@@ -30,14 +30,15 @@ export async function GET(request: Request) {
     console.log('Fetching fresh schedule from API...');
     
     // Generate a random session ID to keep the ZenRows IP the same for both requests
-    const sessionId = Math.floor(Math.random() * 1000000);
+    // Using a smaller random number because ZenRows returns a 400 for large values.
+    const sessionId = Math.floor(Math.random() * 10000);
 
     const getProxyUrl = (targetUrl: string) => {
       const apiKey = process.env.ZENROWS_API_KEY;
       if (apiKey) {
         // We use session_id so ZenRows uses the SAME IP for the cookie request and the API request.
-        // We do NOT use premium_proxy because it requires a paid plan and causes a 400 Bad Request.
-        return `https://api.zenrows.com/v1/?apikey=${apiKey}&url=${encodeURIComponent(targetUrl)}&custom_headers=true&session_id=${sessionId}`;
+        // We use antibot=true because otherwise Cloudflare blocks the request with a 422 error.
+        return `https://api.zenrows.com/v1/?apikey=${apiKey}&url=${encodeURIComponent(targetUrl)}&custom_headers=true&session_id=${sessionId}&antibot=true`;
       }
       return targetUrl;
     };
