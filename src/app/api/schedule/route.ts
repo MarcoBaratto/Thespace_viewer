@@ -57,7 +57,21 @@ export async function GET(request: Request) {
       );
     }
 
-    const data = await apiResponse.json();
+    let data;
+    try {
+      const rawText = await apiResponse.text();
+      try {
+        data = JSON.parse(rawText);
+      } catch (parseError) {
+        console.error('Failed to parse JSON. Raw response:', rawText.substring(0, 500));
+        return NextResponse.json(
+          { error: 'API did not return valid JSON', raw_text: rawText.substring(0, 500) },
+          { status: 502 }
+        );
+      }
+    } catch (e) {
+      return NextResponse.json({ error: 'Failed to read response body' }, { status: 500 });
+    }
 
     // Update cache if not in development
     if (!isDev) {
