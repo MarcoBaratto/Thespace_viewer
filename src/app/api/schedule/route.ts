@@ -28,73 +28,60 @@ export async function GET(request: Request) {
   try {
     console.log('Fetching fresh schedule from API...');
     
-    const sessionId = Math.floor(Math.random() * 10000);
+    const apiKey = process.env.ZENROWS_API_KEY;
+    if (!apiKey) {
+      throw new Error('ZENROWS_API_KEY is not configured');
+    }
 
-    const getProxyUrl = (targetUrl: string, useAntibot: boolean = true) => {
-      const apiKey = process.env.ZENROWS_API_KEY;
-      if (apiKey) {
-        // We use custom_headers=true so ZenRows forwards our Cookie and User-Agent.
-        // We use node:https (fetchHttps) to avoid Next.js fetch polyfill injecting tracking headers.
-        return `https://api.zenrows.com/v1/?apikey=${apiKey}&url=${encodeURIComponent(targetUrl)}&session_id=${sessionId}${useAntibot ? '&antibot=true' : ''}&custom_headers=true`;
-      }
-      return targetUrl;
-    };
+    const apiUrl = `https://www.thespacecinema.it/api/microservice/showings/cinemas/1016/films?minEmbargoLevel=3&includesSession=true&includeSessionAttributes=true`;
+    
+    // We instruct ZenRows to bypass Cloudflare on the homepage, and then run this Javascript 
+    // INSIDE the authenticated browser context to fetch the API and inject it into the DOM.
+    const jsInstructions = [
+      { wait: 3000 },
+      { evaluate: `fetch('${apiUrl}').then(r=>r.text()).then(t=>{ document.body.innerHTML = '<div id="api-data">' + t + '</div>'; }).catch(e=>{ document.body.innerHTML = '<div id="api-data">error</div>'; })` },
+      { wait_for: "#api-data" }
+    ];
+
+    const proxyUrl = `https://api.zenrows.com/v1/?apikey=${apiKey}&url=${encodeURIComponent('https://www.thespacecinema.it/')}&js_render=true&premium_proxy=true&antibot=true&js_instructions=${encodeURIComponent(JSON.stringify(jsInstructions))}`;
 
     // Helper to bypass Next.js patched fetch
-    const fetchHttps = (urlStr: string, headers: Record<string, string> = {}): Promise<{ status: number, data: string, headers: any }> => {
+    const fetchHttps = (urlStr: string): Promise<{ status: number, data: string }> => {
       return new Promise((resolve, reject) => {
-        https.get(urlStr, { headers }, (res) => {
+        https.get(urlStr, (res) => {
           let data = '';
           res.on('data', chunk => data += chunk);
           res.on('end', () => resolve({
             status: res.statusCode || 500,
-            headers: res.headers,
             data
           }));
         }).on('error', reject);
       });
     };
 
-    const defaultUA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+    const response = await fetchHttps(proxyUrl);
 
-    // 1. Fetch the homepage to get the required session cookies
-    const homeResponse = await fetchHttps(getProxyUrl('https://www.thespacecinema.it/', true), {
-      'User-Agent': defaultUA,
-    });
-
-    let cookies = '';
-    const setCookieHeader = homeResponse.headers['set-cookie'];
-    if (setCookieHeader && Array.isArray(setCookieHeader)) {
-      cookies = setCookieHeader.map((c: string) => c.split(';')[0]).join('; ');
-    }
-
-    // 2. Fetch the actual API endpoint
-    const apiUrl = `https://www.thespacecinema.it/api/microservice/showings/cinemas/1016/films?minEmbargoLevel=3&includesSession=true&includeSessionAttributes=true`;
-    
-    const apiHeaders: Record<string, string> = {
-      'User-Agent': defaultUA,
-      'Accept': 'application/json',
-    };
-    if (cookies) {
-      apiHeaders['Cookie'] = cookies;
-    }
-
-    // Using antibot=true for the API as well to share the same session/proxy IP seamlessly
-    const apiResponse = await fetchHttps(getProxyUrl(apiUrl, true), apiHeaders);
-
-    if (apiResponse.status !== 200) {
+    if (response.status !== 200) {
       return NextResponse.json(
-        { error: `API responded with status ${apiResponse.status}`, raw: apiResponse.data.substring(0, 500) },
-        { status: apiResponse.status === 422 ? 502 : apiResponse.status }
+        { error: `ZenRows responded with status ${response.status}`, raw: response.data.substring(0, 500) },
+        { status: response.status === 422 ? 502 : response.status }
+      );
+    }
+
+    const match = response.data.match(/<div id="api-data">([\s\S]*?)<\/div>/);
+    if (!match || match[1] === 'error') {
+      return NextResponse.json(
+        { error: 'Failed to extract JSON from ZenRows browser context', raw: response.data.substring(0, 500) },
+        { status: 502 }
       );
     }
 
     let data;
     try {
-      data = JSON.parse(apiResponse.data);
+      data = JSON.parse(match[1]);
     } catch (parseError) {
       return NextResponse.json(
-        { error: 'API did not return valid JSON', raw_text: apiResponse.data.substring(0, 500) },
+        { error: 'API did not return valid JSON', raw_text: match[1].substring(0, 500) },
         { status: 502 }
       );
     }

@@ -20,11 +20,11 @@ A custom dashboard and viewer for "The Space Cinema" (Cerro Maggiore - ID 1016),
 
 ## 2. Backend / API Proxy (`src/app/api/schedule/route.ts`)
 *   **The Problem:** The official API blocks requests without a valid session cookie, and Cloudflare blocks bot traffic.
-*   **The Proxy Solution (ZenRows):** 
-    *   The Next.js route uses **ZenRows** to bypass Cloudflare. It makes a dummy request to the official homepage to harvest a `set-cookie` header, then attaches this cookie to the actual API call.
-    *   **Antibot & Fingerprinting:** We must pass `antibot=true` and `custom_headers=true` to ZenRows. To avoid Cloudflare blocking us due to Next.js's internal headers (like `x-forwarded-host` which get injected into the global `fetch`), we use the native Node.js `https` module. This allows us to safely pass the `Cookie` and `User-Agent` to the API.
-    *   **Session Management:** Both requests share a `session_id` so ZenRows routes them through the same proxy IP (using a random integer under 10,000).
-    *   **Fetch Caching:** Both `fetch` calls to ZenRows explicitly use `cache: 'no-store'`. Without this, Next.js caches failed responses, preventing recovery.
+*   **The Proxy Solution (ZenRows with js_instructions):** 
+    *   The Next.js route uses **ZenRows** to bypass Cloudflare. Previously it required two steps (fetching the home page for cookies, then fetching the JSON API), but this failed when Cloudflare increased security on the API endpoint.
+    *   Now, we use a single ZenRows request utilizing `js_render=true`, `premium_proxy=true`, and `js_instructions`.
+    *   This tells ZenRows to navigate to the homepage (bypassing the Cloudflare challenge natively in a headless browser), run a `fetch()` command from *within* the authenticated browser context to get the JSON schedule, and inject it back into the DOM (`<div id="api-data">...</div>`). We then extract it from the HTML response.
+    *   This guarantees that the API request perfectly mirrors a real user's session and completely sidesteps 422 errors associated with proxying pure JSON endpoints directly.
 *   **Date Optimization:** By explicitly removing the `showingDate` parameter from the query string, the API returns the complete schedule for the next ~15 days for all movies in a single ~270KB payload. This allows for instant client-side date switching.
 *   **Caching Strategy:** To prevent rate-limiting and minimize ZenRows usage, the API uses a dual-layer 1-hour cache in production (in-memory variable + `Cache-Control: s-maxage=3600`). When running locally (`NODE_ENV === 'development'`), the Next.js `Response` cache is bypassed (`no-store`) for live testing.
 *   **Cache Warming (Vercel Cron):** A Vercel Cron job (`vercel.json`) is configured to hit the `/api/schedule` endpoint every hour (`0 * * * *`). This keeps the Edge Cache and in-memory cache populated.
