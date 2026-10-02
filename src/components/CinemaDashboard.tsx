@@ -36,6 +36,11 @@ interface Movie {
   showingGroups: ShowingGroup[];
 }
 
+const isSessionOriginalLanguage = (attributes: SessionAttribute[]) => {
+  const langAttr = attributes?.find(a => a.attributeType === 'Language');
+  return !!(langAttr?.value?.toLowerCase().includes('original') || langAttr?.name?.toLowerCase().includes('v.o.'));
+};
+
 export default function CinemaDashboard() {
   const [date, setDate] = useState<Date>(new Date());
   const [allMovies, setAllMovies] = useState<Movie[]>([]);
@@ -139,12 +144,10 @@ export default function CinemaDashboard() {
   ).sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
 
   const getLanguageBadge = (attributes: SessionAttribute[]) => {
-    const langAttr = attributes.find(a => a.attributeType === 'Language');
-    const isOriginal = langAttr?.value.toLowerCase().includes('original') || langAttr?.name.toLowerCase().includes('v.o.');
-    
-    if (isOriginal) {
+    if (isSessionOriginalLanguage(attributes)) {
       return <span className="inline-flex items-center gap-1 bg-emerald-500/20 text-emerald-400 text-[10px] px-2 py-0.5 rounded uppercase tracking-wider font-semibold border border-emerald-500/30"><Globe size={10} /> V.O.</span>;
     }
+    const langAttr = attributes?.find(a => a.attributeType === 'Language');
     return <span className="inline-flex items-center gap-1 bg-white/10 text-gray-300 text-[10px] px-2 py-0.5 rounded uppercase tracking-wider font-semibold border border-white/10">{langAttr?.value || 'ITA'}</span>;
   };
 
@@ -198,6 +201,11 @@ export default function CinemaDashboard() {
               <h1 className="text-3xl sm:text-4xl font-black text-white leading-tight mb-3 tracking-tight">{selectedMovie.filmTitle}</h1>
               <div className="flex items-center gap-4 text-sm text-gray-400 mb-6 font-medium">
                 <span className="flex items-center gap-1.5"><Clock size={16} className="text-amber-500"/> {selectedMovie.runningTime} min</span>
+                {selectedMovie.showingGroups?.some(g => g.sessions.some(s => isSessionOriginalLanguage(s.attributes))) && (
+                  <span className="inline-flex items-center gap-1 bg-emerald-500/20 text-emerald-400 text-[11px] px-2.5 py-1 rounded uppercase tracking-wider font-semibold border border-emerald-500/30">
+                    <Globe size={12} /> Versione Originale
+                  </span>
+                )}
               </div>
               <p className="text-base text-gray-300 leading-relaxed mb-6">
                 {selectedMovie.synopsisShort || "Nessuna trama disponibile."}
@@ -358,11 +366,18 @@ export default function CinemaDashboard() {
                   </div>
                   <div className="p-4 flex flex-col flex-1 relative z-20 bg-[#141414]">
                     <h3 className="font-bold text-sm text-white leading-snug line-clamp-2 group-hover:text-amber-400 transition-colors">{movie.filmTitle}</h3>
-                    {firstDateStr && (
-                      <div className="mt-2 text-[10px] text-gray-500 font-bold uppercase tracking-wider">
-                        Dal {firstDateStr}
-                      </div>
-                    )}
+                    <div className="flex flex-col gap-1 mt-2">
+                      {firstDateStr && (
+                        <div className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">
+                          Dal {firstDateStr}
+                        </div>
+                      )}
+                      {movie.showingGroups?.some(g => g.sessions.some(s => isSessionOriginalLanguage(s.attributes))) && (
+                        <div className="inline-flex items-center gap-1 text-emerald-500 text-[10px] font-bold uppercase tracking-wider">
+                          <Globe size={10} /> V.O. Disponibile
+                        </div>
+                      )}
+                    </div>
                     <div className="mt-auto pt-3 flex items-center text-xs text-amber-500 font-bold uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform translate-y-2 group-hover:translate-y-0">
                       Vedi <ChevronRight size={14} className="ml-1" />
                     </div>
@@ -396,9 +411,16 @@ export default function CinemaDashboard() {
                   >
                     {movie.filmTitle}
                   </h2>
-                  <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-5 flex items-center gap-1.5">
-                    <Clock size={12} className="text-amber-500/70" /> {movie.runningTime} MIN
-                  </p>
+                  <div className="flex items-center gap-3 mb-5">
+                    <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest flex items-center gap-1.5">
+                      <Clock size={12} className="text-amber-500/70" /> {movie.runningTime} MIN
+                    </p>
+                    {movie.showingGroups[0].sessions.some(s => isSessionOriginalLanguage(s.attributes)) && (
+                      <span className="inline-flex items-center gap-1 bg-emerald-500/20 text-emerald-400 text-[10px] px-2 py-0.5 rounded uppercase tracking-wider font-semibold border border-emerald-500/30">
+                        <Globe size={10} /> V.O.
+                      </span>
+                    )}
+                  </div>
                   
                   <div className="mt-auto grid grid-cols-2 gap-3 content-start">
                     {movie.showingGroups[0].sessions.map(session => (
