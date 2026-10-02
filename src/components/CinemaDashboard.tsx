@@ -389,7 +389,7 @@ export default function CinemaDashboard() {
         ) : moviesForSelectedDate.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-32 text-gray-500 bg-[#141414] rounded-3xl border border-white/5">
             <Film size={48} className="mb-4 opacity-20" />
-            <p className="text-lg font-medium">Nessuna programmazione trovata per questa data.</p>
+            <p className="text-lg font-medium">Nessuna programmazione trovata per la data selezionata.</p>
           </div>
         ) : viewMode === 'movie' ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
