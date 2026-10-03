@@ -176,7 +176,7 @@ export default function CinemaDashboard() {
     return (
       <div className="min-h-screen bg-[#0a0a0a] text-gray-200 pb-12 font-sans selection:bg-amber-500/30">
         {renderModal()}
-        <div className="sticky top-0 z-10 bg-[#0a0a0a]/80 backdrop-blur-xl border-b border-white/10 shadow-lg px-4 py-4">
+        <div className="sticky top-0 z-40 bg-[#0a0a0a]/80 backdrop-blur-xl border-b border-white/10 shadow-lg px-4 py-4">
           <div className="max-w-5xl mx-auto flex items-center">
             <button 
               onClick={() => handleSelectMovie(null)}
@@ -269,7 +269,7 @@ export default function CinemaDashboard() {
     <div className="min-h-screen bg-[#0a0a0a] text-gray-200 pb-12 font-sans selection:bg-amber-500/30">
       {renderModal()}
       {/* Header & Date Selector (Sticky) */}
-      <div className="sticky top-0 z-20 bg-[#0a0a0a]/90 backdrop-blur-xl border-b border-white/10 shadow-2xl">
+      <div className="sticky top-0 z-40 bg-[#0a0a0a]/90 backdrop-blur-xl border-b border-white/10 shadow-2xl">
         <div className="max-w-6xl mx-auto px-4 py-5">
           <div className="flex flex-col md:flex-row justify-between items-center gap-6">
             <h1 className="text-2xl md:text-3xl font-black tracking-tighter text-white flex items-center gap-3">
