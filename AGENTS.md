@@ -29,7 +29,9 @@ A custom dashboard and viewer for "The Space Cinema" (Cerro Maggiore - ID 1016),
 *   **Caching Strategy:** To prevent rate-limiting and minimize ZenRows usage, the API uses a dual-layer 1-hour cache in production (in-memory variable + `Cache-Control: s-maxage=3600`). When running locally (`NODE_ENV === 'development'`), the Next.js `Response` cache is bypassed (`no-store`) for live testing.
 *   **Cache Warming (Vercel Cron):** A Vercel Cron job (`vercel.json`) is configured to hit the `/api/schedule` endpoint every hour (`0 * * * *`). This keeps the Edge Cache and in-memory cache populated.
 
-## 3. Frontend Architecture (`src/components/CinemaDashboard.tsx`)
+## 3. Frontend Architecture (`src/components/CinemaDashboard.tsx` & sub-components)
+*   **Componentization:** The UI is split into modular components (`MovieGrid`, `MovieTimeline`, `MovieCatalog`, `MovieDetail`, `DashboardHeader`, `SeatMapModal`) located in `src/components/`.
+*   **Data Fetching:** Uses `swr` for data fetching (`useSWR('/api/schedule')`), providing built-in caching, request deduplication, and background revalidation.
 *   **State & Routing:**
     *   Uses native browser History API (`pushState` / `popstate`) combined with URL hash routing (e.g., `#HO00003471`).
     *   Navigating back and forth using physical browser buttons works flawlessly, seamlessly restoring the dashboard state without reloading.
@@ -47,10 +49,13 @@ A custom dashboard and viewer for "The Space Cinema" (Cerro Maggiore - ID 1016),
 *   **Disabled Sessions:** Sessions that are sold out are grayed out using `session.isSoldOut`.
 *   **External Booking:** Clicking an active time slot opens the official ticket booking page (`bookingUrl`) in a new tab.
 *   **Time Display:** Shows both start time and end time (if available).
+*   **Image Optimization:** Uses Next.js `<Image>` component for posters to ensure automatic optimization and lazy loading.
+*   **Favorites / Watchlist:** Users can star movies. Favorites are persisted in `localStorage` and automatically sorted to the top of the lists.
 *   **Seating Maps (Salas):**
     *   Clicking on a "Sala X" badge opens a modal displaying the exact seat map for that room.
     *   Images are stored in `/public/seats/sala_x.png`.
     *   A cache buster (`?v=3`) is appended to the image source to ensure browsers don't load stale images.
+    *   Integrates `react-zoom-pan-pinch` to allow interactive zooming and panning of the seat maps.
 
 ## 5. Automation Tools (Puppeteer)
 *   The `public/seats/` images were automatically generated using a Puppeteer script (`scrape-seats-all.js`).
