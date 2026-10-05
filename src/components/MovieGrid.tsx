@@ -25,13 +25,14 @@ export default function MovieGrid({ movies, onSelectMovie, onSelectSala }: Movie
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-      {movies.map(movie => (
+      {movies.map((movie, index) => (
         <div key={movie.filmId} className="bg-[#141414] rounded-2xl shadow-xl border border-white/5 overflow-hidden flex flex-row hover:border-white/10 transition-colors group">
           <div className="w-[120px] sm:w-[160px] relative bg-black shrink-0 overflow-hidden cursor-pointer" onClick={() => onSelectMovie(movie.filmId)}>
             <Image 
               src={movie.posterImageSrc} 
               alt={movie.filmTitle}
               fill
+              priority={index < 4}
               sizes="(max-width: 640px) 120px, 160px"
               className="object-cover group-hover:scale-105 transition-transform duration-700"
             />

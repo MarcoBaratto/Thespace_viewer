@@ -27,7 +27,7 @@ export default function MovieCatalog({ movies, onSelectMovie, favorites, onToggl
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
-      {sortedMovies.map(movie => {
+      {sortedMovies.map((movie, index) => {
         const firstGroup = movie.showingGroups?.find(g => g.sessions && g.sessions.length > 0);
         const firstDateStr = firstGroup ? format(new Date(firstGroup.date), 'd MMM', { locale: it }) : null;
         const isFav = favorites.includes(movie.filmId);
@@ -51,6 +51,7 @@ export default function MovieCatalog({ movies, onSelectMovie, favorites, onToggl
                 src={movie.posterImageSrc} 
                 alt={movie.filmTitle}
                 fill
+                priority={index < 8}
                 sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 20vw"
                 className="object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
               />

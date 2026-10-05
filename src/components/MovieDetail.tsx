@@ -45,6 +45,7 @@ export default function MovieDetail({ movie, onBack, onSelectSala, isFavorite, o
               src={movie.posterImageSrc} 
               alt={movie.filmTitle}
               fill
+              priority
               sizes="(max-width: 640px) 100vw, 33vw"
               className="object-cover"
             />
