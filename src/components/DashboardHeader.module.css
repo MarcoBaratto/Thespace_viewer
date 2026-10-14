@@ -1,0 +1,8 @@
+.dateScroller {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.dateScroller::-webkit-scrollbar {
+  display: none;
+}

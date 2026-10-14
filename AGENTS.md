@@ -37,7 +37,8 @@ A custom dashboard and viewer for "The Space Cinema" (Cerro Maggiore - ID 1016),
     *   Navigating back and forth using physical browser buttons works flawlessly, seamlessly restoring the dashboard state without reloading.
 *   **Date Navigation:**
     *   Dynamically extracts available dates directly from the API payload (no hardcoded limits).
-    *   Horizontal scrollable sticky date picker with smooth-scrolling arrow buttons.
+    *   On initial load, if today has no remaining showtimes, automatically selects the earliest date with a future session. Manual date selections are left unchanged.
+    *   Horizontal scrollable sticky date picker hides the native scrollbar and keeps smooth-scrolling arrow buttons visible on mobile and desktop.
 *   **Views:**
     1.  **Vista per Film (Grid):** Groups showings by movie, displaying all sessions for the selected day.
     2.  **Vista Oraria (Timeline):** A vertical chronological timeline of all showings for the selected day, sorted by start time.
@@ -48,11 +49,13 @@ A custom dashboard and viewer for "The Space Cinema" (Cerro Maggiore - ID 1016),
 ## 4. UI/UX Details & Styling
 *   **Disabled Sessions:** Sessions that are sold out are grayed out using `session.isSoldOut`.
 *   **External Booking:** Clicking an active time slot opens the official ticket booking page (`bookingUrl`) in a new tab.
-*   **Time Display:** Shows both start time and end time (if available).
+*   **Time Display:** Shows start and end time (when available) on the same line.
+*   **Timeline Cards:** On narrow screens, each showing places the time and booking action in a top row, then gives the full movie title and room/language details a full-width row below. Movie titles wrap instead of truncating or overlapping the poster. Desktop cards retain their horizontal layout. The poster appears prominently on the card's right side, with a narrow fade at its left edge. The booking action is an icon-only ticket button with an accessible label.
 *   **Image Optimization:** Uses Next.js `<Image>` component for posters to ensure automatic optimization and lazy loading.
 *   **Favorites / Watchlist:** Users can star movies. Favorites are persisted in `localStorage` and automatically sorted to the top of the lists.
 *   **Seating Maps (Salas):**
     *   Clicking on a "Sala X" badge opens a modal displaying the exact seat map for that room.
+    *   The modal clarifies that the image shows the room layout and size, not seats occupied for the selected showing.
     *   Images are stored in `/public/seats/sala_x.png`.
     *   A cache buster (`?v=3`) is appended to the image source to ensure browsers don't load stale images.
     *   Integrates `react-zoom-pan-pinch` to allow interactive zooming and panning of the seat maps.

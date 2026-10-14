@@ -4,6 +4,7 @@ import React, { useRef } from 'react';
 import { Film, ChevronLeft, ChevronRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
+import styles from './DashboardHeader.module.css';
 
 interface DashboardHeaderProps {
   dates: Date[];
@@ -33,15 +34,15 @@ export default function DashboardHeader({ dates, selectedDate, onSelectDate, vie
           </h1>
           
           {viewMode !== 'catalog' && (
-            <div className="flex items-center gap-2 max-w-[calc(100vw-32px)] md:max-w-2xl">
+            <div className="flex w-full items-center gap-1.5 max-w-[calc(100vw-32px)] md:w-auto md:gap-2 md:max-w-2xl">
               <button 
                 onClick={() => scroll('left')}
-                className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 text-white hidden sm:flex items-center justify-center shrink-0 border border-white/10 transition-colors"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 md:h-10 md:w-10"
                 aria-label="Scroll dates left"
               >
                 <ChevronLeft size={20} />
               </button>
-              <div ref={scrollContainerRef} className="flex gap-3 overflow-x-auto pb-2 max-w-full no-scrollbar scroll-smooth snap-x">
+              <div ref={scrollContainerRef} className={`${styles.dateScroller} flex min-w-0 max-w-full flex-1 snap-x gap-3 overflow-x-auto scroll-smooth py-2`}>
                 {dates.map(d => {
                   const isSelected = format(d, 'yyyy-MM-dd') === format(selectedDate, 'yyyy-MM-dd');
                   return (
@@ -60,7 +61,7 @@ export default function DashboardHeader({ dates, selectedDate, onSelectDate, vie
               </div>
               <button 
                 onClick={() => scroll('right')}
-                className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 text-white hidden sm:flex items-center justify-center shrink-0 border border-white/10 transition-colors"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 md:h-10 md:w-10"
                 aria-label="Scroll dates right"
               >
                 <ChevronRight size={20} />

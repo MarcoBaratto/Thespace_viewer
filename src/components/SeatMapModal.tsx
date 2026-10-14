@@ -18,14 +18,19 @@ export default function SeatMapModal({ selectedSala, onClose }: SeatMapModalProp
   return (
     <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4 backdrop-blur-sm" onClick={onClose}>
       <div className="bg-[#18181b] rounded-2xl shadow-2xl border border-white/10 overflow-hidden max-w-4xl w-full max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
-        <div className="p-5 border-b border-white/10 flex justify-between items-center bg-[#18181b]">
-          <h2 className="font-bold text-lg text-white">Mappa: {selectedSala}</h2>
-          <div className="flex gap-4 items-center">
-             <span className="text-xs text-gray-400 hidden sm:block">Usa la rotellina o le dita per ingrandire</span>
-             <button onClick={onClose} className="p-2 hover:bg-white/10 text-gray-400 hover:text-white rounded-full transition-colors">
-              <X size={20} />
-            </button>
+        <div className="p-5 border-b border-white/10 bg-[#18181b]">
+          <div className="flex justify-between items-center gap-4">
+            <h2 className="font-bold text-lg text-white">Mappa: {selectedSala}</h2>
+            <div className="flex gap-4 items-center">
+              <span className="text-xs text-gray-400 hidden sm:block">Usa la rotellina o le dita per ingrandire</span>
+              <button onClick={onClose} className="p-2 hover:bg-white/10 text-gray-400 hover:text-white rounded-full transition-colors">
+                <X size={20} />
+              </button>
+            </div>
           </div>
+          <p className="mt-2 text-xs leading-relaxed text-gray-400">
+            Mappa indicativa delle dimensioni della sala, non dei posti occupati.
+          </p>
         </div>
         <div className="flex-1 overflow-auto bg-black p-4 flex justify-center items-center h-full relative cursor-grab active:cursor-grabbing min-h-[300px]">
           <TransformWrapper initialScale={1} minScale={0.5} maxScale={4} centerOnInit>

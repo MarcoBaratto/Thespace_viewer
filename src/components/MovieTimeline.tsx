@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { format } from 'date-fns';
-import { MonitorPlay } from 'lucide-react';
+import { MonitorPlay, Ticket } from 'lucide-react';
 import Image from 'next/image';
 import { Session } from '../types';
 import { getLanguageBadge } from '../utils/helpers';
@@ -24,26 +24,34 @@ export default function MovieTimeline({ sessions, onSelectMovie, onSelectSala }:
   return (
     <div className="space-y-4 max-w-4xl mx-auto">
       {sessions.map(session => (
-        <div key={session.sessionId} className="bg-[#141414] rounded-2xl shadow-lg border border-white/5 p-4 sm:p-5 flex items-center gap-4 sm:gap-6 hover:border-white/10 transition-colors group">
-          <div className="text-center min-w-[70px] sm:min-w-[90px]">
-            <div className="text-2xl sm:text-3xl font-black text-amber-500 leading-none tracking-tighter">{format(new Date(session.startTime), 'HH:mm')}</div>
+        <div key={session.sessionId} className="relative isolate overflow-hidden bg-[#141414] rounded-2xl shadow-lg border border-white/5 p-4 sm:p-5 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-4 sm:flex sm:gap-4 sm:gap-x-6 hover:border-white/10 transition-colors group">
+          <div className="absolute inset-y-0 right-0 w-36 sm:w-48 overflow-hidden pointer-events-none" aria-hidden="true">
+            <Image
+              src={session.poster}
+              alt=""
+              fill
+              sizes="192px"
+              className="object-cover scale-110 opacity-100"
+              style={{
+                maskImage: 'linear-gradient(to right, transparent 0%, black 14%)',
+                WebkitMaskImage: 'linear-gradient(to right, transparent 0%, black 14%)',
+              }}
+            />
+            <div className="absolute inset-0 bg-black/10" />
+          </div>
+
+          <div className="relative z-10 flex items-baseline justify-start sm:justify-center gap-1 min-w-0 sm:min-w-[120px] whitespace-nowrap">
+            <span className="text-2xl sm:text-3xl font-black text-amber-500 leading-none tracking-tighter">{format(new Date(session.startTime), 'HH:mm')}</span>
             {session.endTime ? (
-              <div className="text-[10px] sm:text-[11px] font-bold text-gray-500 mt-2 uppercase tracking-widest">- {format(new Date(session.endTime), 'HH:mm')}</div>
+              <span className="text-[10px] sm:text-xs font-bold text-gray-500">- {format(new Date(session.endTime), 'HH:mm')}</span>
             ) : (
-              <div className="text-[10px] sm:text-[11px] font-bold text-gray-500 mt-2 uppercase tracking-widest">Inizio</div>
+              <span className="text-[10px] sm:text-[11px] font-bold text-gray-500 uppercase tracking-widest">Inizio</span>
             )}
           </div>
           
-          <div 
-            className="w-14 h-20 sm:w-16 sm:h-24 relative rounded-lg overflow-hidden shrink-0 hidden sm:block cursor-pointer shadow-md"
-            onClick={() => onSelectMovie(session.movieId)}
-          >
-            <Image src={session.poster} alt={session.movieTitle} fill sizes="64px" className="object-cover group-hover:scale-110 transition-transform duration-500" />
-          </div>
-          
-          <div className="flex-1 min-w-0">
+          <div className="relative z-10 -translate-y-1 col-span-2 sm:col-span-1 sm:flex-1 min-w-0 pr-32 sm:pr-[10.75rem]">
             <h3 
-              className="font-black text-lg sm:text-xl text-white leading-tight cursor-pointer hover:text-amber-400 transition-colors truncate"
+              className="font-black text-lg sm:text-xl text-white leading-tight cursor-pointer hover:text-amber-400 transition-colors break-words"
               onClick={() => onSelectMovie(session.movieId)}
             >
               {session.movieTitle}
@@ -63,13 +71,15 @@ export default function MovieTimeline({ sessions, onSelectMovie, onSelectSala }:
             href={session.isBookingAvailable && session.bookingUrl && !session.isSoldOut ? `https://www.thespacecinema.it${session.bookingUrl}` : undefined}
             target={session.isBookingAvailable && session.bookingUrl && !session.isSoldOut ? "_blank" : undefined}
             rel="noopener noreferrer"
-            className={`ml-auto px-4 py-2.5 sm:px-6 sm:py-3 rounded-xl font-bold text-xs sm:text-sm transition-all duration-300 shrink-0 uppercase tracking-widest flex items-center justify-center
-              ${session.isSoldOut ? 'bg-white/5 text-gray-500 cursor-not-allowed' : 'bg-amber-500 text-black hover:bg-amber-400 hover:shadow-[0_0_15px_rgba(245,158,11,0.4)]'}`}
+            aria-label={session.isSoldOut ? `${session.movieTitle}: non disponibile` : `Acquista i biglietti per ${session.movieTitle}`}
+            title={session.isSoldOut ? 'Non disponibile' : 'Acquista i biglietti'}
+            className={`relative z-10 col-start-2 row-start-1 ml-auto size-11 rounded-xl transition-all duration-300 shrink-0 flex items-center justify-center sm:static
+              ${session.isSoldOut ? 'bg-white/5 text-gray-500 cursor-not-allowed' : 'bg-black/45 border border-white/10 text-gray-200 hover:bg-black/65 hover:text-white hover:border-white/20'}`}
             onClick={(e) => {
               if (session.isSoldOut) e.preventDefault();
             }}
           >
-            Acquista
+            <Ticket size={15} strokeWidth={2} aria-hidden="true" />
           </a>
         </div>
       ))}

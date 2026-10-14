@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import useSWR from 'swr';
 import { format } from 'date-fns';
 import { Movie } from '../types';
@@ -20,6 +20,7 @@ export default function CinemaDashboard() {
   const [selectedMovieId, setSelectedMovieId] = useState<string | null>(null);
   const [selectedSala, setSelectedSala] = useState<string | null>(null);
   const [favorites, setFavorites] = useState<string[]>([]);
+  const initialDateResolved = useRef(false);
 
   // Load favorites from local storage on mount
   useEffect(() => {
@@ -86,12 +87,37 @@ export default function CinemaDashboard() {
       });
     });
     
-    let parsedDates = Array.from(dateSet).sort().map(dStr => new Date(dStr));
+    let parsedDates = Array.from(dateSet).sort().map(dStr => new Date(`${dStr.slice(0, 10)}T00:00:00`));
     if (parsedDates.length === 0) {
       parsedDates = [new Date()];
     }
     return parsedDates;
   }, [allMovies]);
+
+  // On first load, skip dates that have no remaining showtimes (for example, late at night).
+  useEffect(() => {
+    if (apiData === undefined || initialDateResolved.current) return;
+    initialDateResolved.current = true;
+
+    const now = Date.now();
+    const today = format(new Date(), 'yyyy-MM-dd');
+    const datesWithUpcomingShowings = new Set<string>();
+
+    allMovies.forEach(movie => {
+      movie.showingGroups?.forEach(group => {
+        if (group.sessions?.some(session => new Date(session.startTime).getTime() > now)) {
+          datesWithUpcomingShowings.add(group.date.slice(0, 10));
+        }
+      });
+    });
+
+    if (datesWithUpcomingShowings.has(today)) return;
+
+    const firstUpcomingDate = Array.from(datesWithUpcomingShowings).sort()[0];
+    if (firstUpcomingDate) {
+      setDate(new Date(`${firstUpcomingDate}T00:00:00`));
+    }
+  }, [apiData, allMovies]);
 
   // Filter movies for the currently selected date
   const dateStr = format(date, 'yyyy-MM-dd');
